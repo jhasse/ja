@@ -14,7 +14,7 @@
 
 ## Progress bar and ETA
 
-A nice progress bar makes compiling fun! Also *ja* will display an approximation of the time left. Since *ja* runs independently from *ninja*, this output will be updated in real-time, even if the jobs itself takes a long time to finish.
+A nice progress bar makes compiling fun! Also *ja* will display an approximation of the time left. Since *ja* runs independently from *ninja*, this output will be updated in real-time, even if the jobs itself take a long time to finish.
 
 ## Automatically configures CMake or Meson projects
 
