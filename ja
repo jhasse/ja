@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+
+import subprocess
+import os
+import enum
+import click
+
+def run(cmd, silent=False, may_fail=False):
+    if silent:
+        cmd += " &>/dev/null"
+    print('\x1b[1m> \x1b[34m' + cmd + '\x1b[0m')
+    try:
+        subprocess.check_call(cmd, shell=True)
+    except subprocess.CalledProcessError as err:
+        if not may_fail:
+            raise err
+
+class BuildSystem(enum.Enum):
+    MESON = enum.auto()
+    CMAKE = enum.auto()
+
+@click.command()
+@click.version_option(version="0.1.0")
+def main():
+    ninja_help = ''
+    try:
+        ninja_help = subprocess.check_output(['ninja', '--help'], stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as err:
+        ninja_help = err.stdout
+    except FileNotFoundError:
+        click.secho("Couldn't find ninja command. Please make sure it's on your PATH.", fg='red')
+        exit(1)
+    if b'--frontend' not in ninja_help:
+        click.secho("Your version of ninja doesn't support external frontends.\nSee "
+                    "https://github.com/ninja-build/ninja/pull/1210 for more information.",
+                    fg='red')
+        exit(1)
+
+    try:
+        build_system = None
+        build_dir = 'build'
+        if not os.path.exists('build.ninja'):
+            old_cwd = os.getcwd()
+            if os.listdir('.') == []: # Current directory empty?
+                build_dir = '.'
+                os.chdir('..')
+
+            if os.path.exists('meson.build'):
+                build_system = BuildSystem.MESON
+            elif os.path.exists('CMakeLists.txt'):
+                build_system = BuildSystem.CMAKE
+
+            os.chdir(old_cwd)
+
+        if build_system != None:
+            if os.path.isfile(build_dir):
+                click.secho("Can't create directory '{}' because a file with that name exists."
+                            .format(build_dir), fg='red')
+                exit(1)
+
+            if build_dir != '.':
+                if not os.path.exists(build_dir):
+                    run('mkdir ' + build_dir)
+                if os.path.exists(build_dir):
+                    run('cd ' + build_dir)
+                    os.chdir(build_dir)
+
+            if not os.path.exists('build.ninja'):
+                if build_system == BuildSystem.MESON:
+                    run('meson ..')
+                elif build_system == BuildSystem.CMAKE:
+                    run('cmake -GNinja ..')
+
+        run('ninja')
+    except subprocess.CalledProcessError as err:
+        exit(err.returncode)
+
+if __name__ == '__main__':
+    main()
