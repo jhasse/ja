@@ -4,6 +4,8 @@ import subprocess
 import os
 import enum
 import click
+import frontend
+from native import NinjaNativeFrontend
 
 def run(cmd, silent=False, may_fail=False):
     if silent:
@@ -71,7 +73,19 @@ def main():
                 elif build_system == BuildSystem.CMAKE:
                     run('cmake -GNinja ..')
 
-        run('ninja')
+        native = NinjaNativeFrontend()
+
+        ps = subprocess.Popen(['ninja --frontend="cat <&3 2>/dev/null"'],
+                            shell=True, stdout=subprocess.PIPE)
+
+        try:
+            for msg in frontend.Frontend(ps.stdout):
+                if native.handle(msg):
+                    exit(1)
+        except KeyboardInterrupt:
+            native.printer.print_on_new_line('\x1b[1;31mInterrupted\n')
+            exit(130)
+
     except subprocess.CalledProcessError as err:
         exit(err.returncode)
 
