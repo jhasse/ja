@@ -8,8 +8,10 @@ import os
 import re
 import struct
 import sys
+import datetime
 from zlib import adler32
 
+import humanize
 import frontend
 
 class SlidingRateInfo(object):
@@ -44,7 +46,7 @@ class NinjaNativeFrontend:
 
         self.time_millis = 0
 
-        self.progress_status_format = os.getenv('NINJA_STATUS', '[%f/%t] ')
+        self.progress_status_format = os.getenv('NINJA_STATUS', ' ETA: %a ')
         self.current_rate = SlidingRateInfo()
         self.console_locked = False
 
@@ -173,15 +175,28 @@ class NinjaNativeFrontend:
                     out += '{:3d}%'.format((100 * self.finished_edges) // self.total_edges)
                 elif c == 'e':
                     out += '{:.3f}'.format(self.time_millis / 1e3)
+                elif c == 'a':
+                    if self.finished_edges > 0:
+                        out += humanize.naturaldelta(datetime.timedelta(seconds=self.time_millis / self.finished_edges * (
+                            self.total_edges - self.finished_edges) / 1e3))
+                    else:
+                        out += '?'
                 else:
                     raise Exception('unknown placeholder '' + c +'' in $NINJA_STATUS')
             else:
                 out += c
-        return out
+        out = '{:17}'.format(out)
+        bar_end = (len(out) * self.finished_edges) // self.total_edges
+        return '\x1b[0;36m▕\x1b[1;37;46m' + out[:bar_end] + '\x1b[0m\x1b[1m' + out[bar_end:] + '\x1b[0;36m▏\x1b[0m'
 
     def print_status(self, edge_started):
         to_print = edge_started.desc
-        hash_number = adler32(''.join(to_print.split(' ')[:3]).encode()) % 10
+        words = to_print.split(' ')
+        try:
+            # We hash the first word and the first character of the third word:
+            hash_number = adler32((words[0] + words[2][:1]).encode()) % 10
+        except IndexError:
+            hash_number = 0
         to_print = "\x1b[{};3{}m{}\x1b[0m".format(
             1 if hash_number > 4 else 0, hash_number % 5 + 2, to_print,
         )
@@ -193,11 +208,32 @@ class NinjaNativeFrontend:
         self.printer.print_line(to_print, LinePrinter.LINE_FULL if self.verbose else LinePrinter.LINE_ELIDE)
 
 
+ansi_escape = re.compile(r'\x1b[^m]*m')
 def elide_middle(status, width):
-    margin = 3 # Space for "...".
-    if len(status) + margin > width:
+    margin = 1 # Space for "…".
+    status_stripped = ansi_escape.sub('', status)
+    if len(status_stripped) + margin > width:
         elide_size = (width - margin) // 2
-        status = status[0:elide_size] + "..." + status[-elide_size:]
+
+        escapes = []
+        added_len = 0 # total number of characters
+        for m in ansi_escape.finditer(status):
+            escapes += [(m.start() - added_len, m.group())]
+            added_len += len(m.group())
+
+        status = status_stripped[0:elide_size] + "…" + status_stripped[-elide_size:]
+
+        added_len = 0
+        # We need to put all ANSI escape codes back in:
+        for escape in escapes:
+            pos = escape[0]
+            if pos > elide_size:
+                pos -= len(status_stripped) - width
+                if pos < width - elide_size:
+                    pos = width - elide_size
+            pos += added_len
+            status = status[:pos] + escape[1] + status[pos:]
+            added_len += len(escape[1])
     return status
 
 class LinePrinter(object):
