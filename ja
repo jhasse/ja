@@ -93,12 +93,10 @@ def main():
             pass
 
         command = 'ninja --frontend="python3 {}"'.format(os.path.join(root_dir, "server.py"))
-        ps = subprocess.Popen([command], shell=True)
+        subprocess.Popen([command], shell=True)
 
         server = None
         while not server:
-            if not ps.poll() is None:
-                exit(ps.returncode)
             try:
                 server = bus.get("com.bixense.Ja")
             except GLib.GError:
