@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import hashlib
 from pydbus import SessionBus
 from gi.repository import GObject
 
@@ -20,7 +21,10 @@ with open(os.path.join(os.path.dirname(__file__), "com.bixense.Ja.xml"), "r") as
 
 loop = GObject.MainLoop()
 bus = SessionBus()
-bus.publish("com.bixense.Ja", JaServer(loop.quit))
+# Add a hash of the working directory so that it's possible to run ja multiple times per session,
+# but not per directory:
+bus.publish("com.bixense.Ja." + hashlib.sha256(os.path.realpath(os.getcwd()).encode()).hexdigest(),
+            JaServer(loop.quit))
 try:
 	loop.run()
 except KeyboardInterrupt:

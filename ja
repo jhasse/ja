@@ -4,6 +4,8 @@ import subprocess
 import os
 import enum
 import time
+import hashlib
+
 import click
 import frontend
 from native import NinjaNativeFrontend
@@ -80,16 +82,21 @@ def main():
         native = NinjaNativeFrontend()
         bus = SessionBus()
 
+        # Add a hash of the working directory so that it's possible to run ja multiple times per
+        # session, but not per directory:
+        dbus_name = "com.bixense.Ja." + \
+                    hashlib.sha256(os.path.realpath(os.getcwd()).encode()).hexdigest()
+
         try:
-            bus.get("com.bixense.Ja")
+            bus.get(dbus_name)
             try:
                 print("Waiting for previous instance to finish ", end='')
-                while bus.get("com.bixense.Ja"):
+                while bus.get(dbus_name):
                     print('.', end='', flush=True)
                     time.sleep(1)
             finally:
                 print('')
-        except GLib.Error:
+        except GLib.GError:
             pass
 
         command = 'ninja --frontend="python3 {}"'.format(os.path.join(root_dir, "server.py"))
@@ -98,7 +105,7 @@ def main():
         server = None
         while not server:
             try:
-                server = bus.get("com.bixense.Ja")
+                server = bus.get(dbus_name)
             except GLib.GError:
                 pass
         try:
