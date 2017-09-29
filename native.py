@@ -43,6 +43,7 @@ class NinjaNativeFrontend:
         self.started_edges = 0
         self.finished_edges = 0
         self.running = {}
+        self.last_started_edge = None
 
         self.time_millis = 0
 
@@ -72,13 +73,18 @@ class NinjaNativeFrontend:
         if msg.HasField("build_finished"):
             handled = True
             self.printer.set_console_locked(False)
-            self.printer.print_on_new_line("")
+            self.printer.print_line("\x1b[1;32mfinished {} jobs in {}.".format(
+                self.total_edges,
+                humanize.naturaldelta(datetime.timedelta(seconds=self.time_millis / 1e3))
+            ), LinePrinter.LINE_ELIDE)
+            self.printer.print_line("\x1b[0m", LinePrinter.LINE_FULL)
 
         if msg.HasField("edge_started"):
             handled = True
             self.started_edges += 1
             self.running_edges += 1
             self.running[msg.edge_started.id] = msg.edge_started
+            self.last_started_edge = msg.edge_started
             self.time_millis = msg.edge_started.start_time
             if msg.edge_started.console or self.printer.smart_terminal:
                 self.print_status(msg.edge_started)
@@ -92,6 +98,8 @@ class NinjaNativeFrontend:
 
             edge_started = self.running[msg.edge_finished.id]
 
+            # FIXME: We shouldn't access printer's internal variable line_buffer:
+            status_line = self.printer.line_buffer
             if edge_started.console:
                 self.printer.set_console_locked(False)
 
@@ -101,38 +109,55 @@ class NinjaNativeFrontend:
             self.running_edges -= 1
             del self.running[msg.edge_finished.id]
 
-            # Print the command that is spewing before printing its output.
+            color = '\x1b[1;34m' if msg.edge_finished.output != '' else None
             if msg.edge_finished.status != 0:
-                self.printer.print_on_new_line('FAILED: ' + ' '.join(edge_started.outputs))
-                self.printer.print_on_new_line(edge_started.command)
+                color = '\x1b[1;31m'
                 edge_failed = True
 
-            # ninja sets stdout and stderr of subprocesses to a pipe, to be able to
-            # check if the output is empty. Some compilers, e.g. clang, check
-            # isatty(stderr) to decide if they should print colored output.
-            # To make it possible to use colored output with ninja, subprocesses should
-            # be run with a flag that forces them to always print color escape codes.
-            # To make sure these escape codes don't show up in a file if ninja's output
-            # is piped to a file, ninja strips ansi escape codes again if it's not
-            # writing to a |smart_terminal_|.
-            # (Launching subprocesses in pseudo ttys doesn't work because there are
-            # only a few hundred available on some systems, and ninja can launch
-            # thousands of parallel compile commands.)
-            # TODO: There should be a flag to disable escape code stripping.
-            if msg.edge_finished.output != '':
+            if color:
+                self.printer.print_line('', LinePrinter.LINE_ELIDE)
+                if self.verbose or msg.edge_finished.output == '':
+                    # Print the command that is spewing before printing its output.
+                    self.printer.print_line(color + edge_started.command + '\x1b[0m\n',
+                                            LinePrinter.LINE_FULL)
+
+                # ninja sets stdout and stderr of subprocesses to a pipe, to be able to
+                # check if the output is empty. Some compilers, e.g. clang, check
+                # isatty(stderr) to decide if they should print colored output.
+                # To make it possible to use colored output with ninja, subprocesses should
+                # be run with a flag that forces them to always print color escape codes.
+                # To make sure these escape codes don't show up in a file if ninja's output
+                # is piped to a file, ninja strips ansi escape codes again if it's not
+                # writing to a |smart_terminal_|.
+                # (Launching subprocesses in pseudo ttys doesn't work because there are
+                # only a few hundred available on some systems, and ninja can launch
+                # thousands of parallel compile commands.)
+                # TODO: There should be a flag to disable escape code stripping.
                 if not self.printer.smart_terminal:
                     msg.edge_finished.output = strip_ansi_escape_codes(msg.edge_finished.output)
-                self.printer.print_on_new_line(msg.edge_finished.output)
+
+                # rstrp('\n') because the build output contains a trailing newline most of the time
+                # which isn't needed:
+                self.printer.print_line(msg.edge_finished.output.rstrip('\n'), LinePrinter.LINE_FULL)
+
+                # Restore status line:
+                self.printer.print_line(status_line, LinePrinter.LINE_ELIDE)
+                # if not edge_failed and self.last_started_edge:
+                #     # we need to reprint the status line:
+                #     if self.last_started_edge.console or self.printer.smart_terminal:
+                #         self.print_status(self.last_started_edge)
+                #     if self.last_started_edge.console:
+                #         self.printer.set_console_locked(True)
 
         if msg.HasField("message"):
             handled = True
             # TODO(colincross): get the enum values from proto
             if msg.message.level == 0:
-                prefix = 'ninja: '
+                prefix = '\x1b[1;32m'
             elif msg.message.level == 1:
-                prefix = 'ninja: warning: '
+                prefix = '\x1b[1;35mwarning: '
             elif msg.message.level == 2:
-                prefix = 'ninja: error: '
+                prefix = '\x1b[1;31merror: '
             self.printer.print_line(prefix + msg.message.message, LinePrinter.LINE_FULL)
 
         if not handled:
@@ -177,8 +202,10 @@ class NinjaNativeFrontend:
                     out += '{:.3f}'.format(self.time_millis / 1e3)
                 elif c == 'a':
                     if self.finished_edges > 0:
-                        out += humanize.naturaldelta(datetime.timedelta(seconds=self.time_millis / self.finished_edges * (
-                            self.total_edges - self.finished_edges) / 1e3))
+                        out += humanize.naturaldelta(
+                            datetime.timedelta(seconds=self.time_millis / self.finished_edges * \
+                            (self.total_edges - self.finished_edges) / 1e3)
+                        )
                     else:
                         out += '?'
                 else:
@@ -187,7 +214,8 @@ class NinjaNativeFrontend:
                 out += c
         out = '{:17}'.format(out)
         bar_end = (len(out) * self.finished_edges) // self.total_edges
-        return '\x1b[0;36m▕\x1b[1;37;46m' + out[:bar_end] + '\x1b[0m\x1b[1m' + out[bar_end:] + '\x1b[0;36m▏\x1b[0m'
+        return '\x1b[0;36m▕\x1b[1;37;46m' + out[:bar_end] + '\x1b[0m\x1b[1m' + out[bar_end:] + \
+               '\x1b[0;36m▏\x1b[0m'
 
     def print_status(self, edge_started):
         to_print = edge_started.desc

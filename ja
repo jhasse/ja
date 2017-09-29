@@ -15,7 +15,7 @@ from gi.repository import GLib
 def run(cmd, silent=False, may_fail=False):
     if silent:
         cmd += " &>/dev/null"
-    print('\x1b[1m> \x1b[34m' + cmd + '\x1b[0m')
+    print('\x1b[1;34m$ ' + cmd + '\x1b[0m')
     try:
         subprocess.check_call(cmd, shell=True)
     except subprocess.CalledProcessError as err:
