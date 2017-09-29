@@ -3,9 +3,12 @@
 import subprocess
 import os
 import enum
+import time
 import click
 import frontend
 from native import NinjaNativeFrontend
+from pydbus import SessionBus
+from gi.repository import GLib
 
 def run(cmd, silent=False, may_fail=False):
     if silent:
@@ -38,6 +41,7 @@ def main():
                     fg='red')
         exit(1)
 
+    root_dir = os.path.abspath(os.path.dirname(__file__))
     try:
         build_system = None
         build_dir = 'build'
@@ -74,17 +78,46 @@ def main():
                     run('cmake -GNinja ..')
 
         native = NinjaNativeFrontend()
-
-        ps = subprocess.Popen(['ninja --frontend="cat <&3 2>/dev/null"'],
-                            shell=True, stdout=subprocess.PIPE)
+        bus = SessionBus()
 
         try:
-            for msg in frontend.Frontend(ps.stdout):
-                if native.handle(msg):
-                    exit(1)
+            bus.get("com.bixense.Ja")
+            try:
+                print("Waiting for previous instance to finish ", end='')
+                while bus.get("com.bixense.Ja"):
+                    print('.', end='', flush=True)
+                    time.sleep(1)
+            finally:
+                print('')
+        except GLib.Error:
+            pass
+
+        command = 'ninja --frontend="python3 {}"'.format(os.path.join(root_dir, "server.py"))
+        ps = subprocess.Popen([command], shell=True)
+
+        server = None
+        while not server:
+            if not ps.poll() is None:
+                exit(ps.returncode)
+            try:
+                server = bus.get("com.bixense.Ja")
+            except GLib.GError:
+                pass
+        try:
+            try:
+                for msg in frontend.Frontend(server):
+                    if native.handle(msg):
+                        exit(1)
+            except GLib.GError:
+                raise KeyboardInterrupt
         except KeyboardInterrupt:
             native.printer.print_on_new_line('\x1b[1;31mInterrupted\n')
             exit(130)
+        finally:
+            try:
+                server.kill()
+            except GLib.GError:
+                pass # Server has already quit
 
     except subprocess.CalledProcessError as err:
         exit(err.returncode)

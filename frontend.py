@@ -47,7 +47,7 @@ class Frontend(object):
         size = 0
         shift = 0
         while True:
-            byte = bytearray(self.reader.read(1))
+            byte = bytearray(bytes(self.reader.read(1)))
             if len(byte) == 0:
                 raise StopIteration()
 
@@ -59,10 +59,9 @@ class Frontend(object):
             if shift > 4:
                 raise "Expected varint32 length-delimeted message"
 
-        message = self.reader.read(size)
+        message = bytes(self.reader.read(size))
         if len(message) != size:
-            # raise "Unexpected EOF reading %d bytes" % size
-            return self.next()
+            raise "Unexpected EOF reading %d bytes" % size
 
         try:
             return self.status_class.FromString(message)
