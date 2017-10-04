@@ -42,7 +42,7 @@ class NinjaNativeFrontend:
         self.running_edges = 0
         self.started_edges = 0
         self.finished_edges = 0
-        self.running = {}
+        self.running = collections.OrderedDict()
         self.last_started_edge = None
 
         self.time_millis = 0
@@ -98,8 +98,6 @@ class NinjaNativeFrontend:
 
             edge_started = self.running[msg.edge_finished.id]
 
-            # FIXME: We shouldn't access printer's internal variable line_buffer:
-            status_line = self.printer.line_buffer
             if edge_started.console:
                 self.printer.set_console_locked(False)
 
@@ -140,14 +138,14 @@ class NinjaNativeFrontend:
                 # which isn't needed:
                 self.printer.print_line(msg.edge_finished.output.rstrip('\n'), LinePrinter.LINE_FULL)
 
-                # Restore status line:
-                self.printer.print_line(status_line, LinePrinter.LINE_ELIDE)
-                # if not edge_failed and self.last_started_edge:
-                #     # we need to reprint the status line:
-                #     if self.last_started_edge.console or self.printer.smart_terminal:
-                #         self.print_status(self.last_started_edge)
-                #     if self.last_started_edge.console:
-                #         self.printer.set_console_locked(True)
+            # We wouldn't want to print the status for an edge that has finished, therefore reprint
+            # the status line with an edge that is running:
+            if not edge_failed and self.running:
+                running_edge = list(self.running.values())[0]
+                if running_edge.console or self.printer.smart_terminal:
+                    self.print_status(running_edge)
+                if running_edge.console:
+                    self.printer.set_console_locked(True)
 
         if msg.HasField("message"):
             handled = True
