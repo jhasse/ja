@@ -19,8 +19,7 @@ different terminals.
 ## Colored output
 
 *ja* will display a jobs description with colors, similar to CMake's `make` output. That way you can
-easily distinguish compiling from linking, etc. When a job fails this is indicated by coloring the
-jobs command line in bold red.
+easily distinguish compiling from linking, etc.
 
 ## Progress bar and ETA
 
