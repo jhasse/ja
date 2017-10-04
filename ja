@@ -4,6 +4,7 @@ import subprocess
 import os
 import enum
 import time
+import shlex
 
 import click
 import frontend
@@ -23,9 +24,17 @@ class BuildSystem(enum.Enum):
     MESON = enum.auto()
     CMAKE = enum.auto()
 
-@click.command()
+@click.command(help="""Frontend for ninja focusing on a faster edit, compile, debug cycle.\n
+If TARGETS are unspecified, builds the 'default' target (see manual).""")
 @click.version_option(version="0.1.0")
-def main():
+@click.option('-t', metavar='TOOL', required=False,
+              help='Run a subtool (use -t list to list subtools).')
+@click.option('-C', metavar='DIR', required=False,
+              help='Change to DIR before doing anything else.')
+@click.argument('targets', nargs=-1)
+def main(t, c, targets):
+    if t:
+        os.execl('/bin/sh', 'sh', '-c', 'ninja -t ' + t)
     ninja_help = ''
     try:
         ninja_help = subprocess.check_output(['ninja', '--help'], stderr=subprocess.STDOUT)
@@ -40,7 +49,13 @@ def main():
                     fg='red')
         exit(1)
 
-    root_dir = os.path.abspath(os.path.dirname(__file__))
+    if c:
+        try:
+            os.chdir(c)
+        except FileNotFoundError as err:
+            click.secho(str(err), fg='red', bold=True)
+            exit(1)
+
     try:
         build_system = None
         build_dir = 'build'
@@ -86,7 +101,9 @@ def main():
                 time.sleep(1)
 
         os.mkfifo(fifo)
-        subprocess.Popen(['ninja --frontend="cat <&3 >{0}; rm {0}"'.format(fifo)], shell=True)
+        subprocess.Popen(['ninja --frontend="cat <&3 >{0}; rm {0}" {1}'.format(
+            fifo, ' '.join([shlex.quote(x) for x in targets])
+        )], shell=True)
 
         try:
             for msg in frontend.Frontend(open(fifo, 'rb')):
