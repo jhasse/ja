@@ -33,8 +33,6 @@ If TARGETS are unspecified, builds the 'default' target (see manual).""")
               help='Change to DIR before doing anything else.')
 @click.argument('targets', nargs=-1)
 def main(t, c, targets):
-    if t:
-        os.execl('/bin/sh', 'sh', '-c', 'ninja -t ' + t)
     ninja_help = ''
     try:
         ninja_help = subprocess.check_output(['ninja', '--help'], stderr=subprocess.STDOUT)
@@ -90,6 +88,9 @@ def main(t, c, targets):
                     run('meson ..')
                 elif build_system == BuildSystem.CMAKE:
                     run('cmake -GNinja ..')
+
+        if t:
+            os.execl('/bin/sh', 'sh', '-c', 'ninja -t ' + t)
 
         native = NinjaNativeFrontend()
 
