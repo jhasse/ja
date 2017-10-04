@@ -111,7 +111,7 @@ def main(t, c, targets):
                 if native.handle(msg):
                     exit(1)
         except KeyboardInterrupt:
-            native.printer.print_on_new_line('\x1b[1;31mbuild stopped: interrupted by user.\n')
+            native.printer.print_on_new_line('\x1b[1;31mbuild stopped: interrupted by user.\x1b[0m\n')
             os.remove(fifo)
             exit(130)
 
