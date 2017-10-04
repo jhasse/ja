@@ -4,13 +4,10 @@ import subprocess
 import os
 import enum
 import time
-import hashlib
 
 import click
 import frontend
 from native import NinjaNativeFrontend
-from pydbus import SessionBus
-from gi.repository import GLib
 
 def run(cmd, silent=False, may_fail=False):
     if silent:
@@ -80,49 +77,25 @@ def main():
                     run('cmake -GNinja ..')
 
         native = NinjaNativeFrontend()
-        bus = SessionBus()
 
-        # Add a hash of the working directory so that it's possible to run ja multiple times per
-        # session, but not per directory:
-        dbus_name = "com.bixense.Ja." + \
-                    hashlib.sha256(os.path.realpath(os.getcwd()).encode()).hexdigest()
+        # Only allow one running instance per build directory:
+        fifo = 'ja.lock'
+        if os.path.exists(fifo):
+            print("\x1b[1;36mwaiting for file lock on build directory\x1b[0m")
+            while os.path.exists(fifo):
+                time.sleep(1)
+
+        os.mkfifo(fifo)
+        subprocess.Popen(['ninja --frontend="cat <&3 >{0}; rm {0}"'.format(fifo)], shell=True)
 
         try:
-            bus.get(dbus_name)
-            try:
-                print("Waiting for previous instance to finish ", end='')
-                while bus.get(dbus_name):
-                    print('.', end='', flush=True)
-                    time.sleep(1)
-            finally:
-                print('')
-        except GLib.GError:
-            pass
-
-        command = 'ninja --frontend="python3 {}"'.format(os.path.join(root_dir, "server.py"))
-        subprocess.Popen([command], shell=True)
-
-        server = None
-        while not server:
-            try:
-                server = bus.get(dbus_name)
-            except GLib.GError:
-                pass
-        try:
-            try:
-                for msg in frontend.Frontend(server):
-                    if native.handle(msg):
-                        exit(1)
-            except GLib.GError:
-                raise KeyboardInterrupt
+            for msg in frontend.Frontend(open(fifo, 'rb')):
+                if native.handle(msg):
+                    exit(1)
         except KeyboardInterrupt:
-            native.printer.print_on_new_line('\x1b[1;31mInterrupted\n')
+            native.printer.print_on_new_line('\x1b[1;31mbuild stopped: interrupted by user.\n')
+            os.remove(fifo)
             exit(130)
-        finally:
-            try:
-                server.kill()
-            except GLib.GError:
-                pass # Server has already quit
 
     except subprocess.CalledProcessError as err:
         exit(err.returncode)
