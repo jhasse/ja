@@ -1,9 +1,0 @@
-<node>
-	<interface name='com.bixense.Ja'>
-	<method name='read'>
-		<arg type='x' direction='in'/>
-		<arg type='ay' direction='out'/>
-	</method>
-	<method name='kill'/>
-	</interface>
-</node>
