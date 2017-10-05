@@ -7,7 +7,7 @@ message to a handler object
 """
 
 import os
-
+import pkg_resources
 import google.protobuf.descriptor_pb2
 import google.protobuf.message_factory
 
@@ -25,15 +25,14 @@ class Frontend(object):
         self.status_class = self.get_status_proto()
 
     def get_status_proto(self):
-        set = google.protobuf.descriptor_pb2.FileDescriptorSet()
-        descriptor = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'frontend.pb')
-        with open(descriptor, 'rb') as f:
-            set.ParseFromString(f.read())
+        fd_set = google.protobuf.descriptor_pb2.FileDescriptorSet()
+        descriptor = 'frontend.pb'
+        fd_set.ParseFromString(pkg_resources.resource_string(__name__, 'frontend.pb'))
 
-        if len(set.file) != 1:
-            raise('expected exactly one file descriptor in ' + descriptor)
+        if len(fd_set.file) != 1:
+            raise RuntimeError('expected exactly one file descriptor in ' + descriptor)
 
-        messages = google.protobuf.message_factory.GetMessages(set.file)
+        messages = google.protobuf.message_factory.GetMessages(fd_set.file)
         return messages['ninja.Status']
 
     def __iter__(self):
