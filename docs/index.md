@@ -43,8 +43,8 @@ always showing a command that is still running in its status output.
 # Installation
 
 *ja* is NOT a fork of *ninja*, it's a frontend written in Python which runs alongside. Until
-https://github.com/ninja-build/ninja/pull/1210 is merged you'll need to build *ninja* from source
-though:
+[ninja PR #1210](https://github.com/ninja-build/ninja/pull/1210) is merged you'll need to build
+*ninja* from source though:
 
 ```sh
 git clone https://github.com/colincross/ninja
