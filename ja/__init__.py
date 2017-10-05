@@ -26,7 +26,7 @@ class BuildSystem(enum.Enum):
 
 @click.command(help="""Frontend for ninja focusing on a faster edit, compile, debug cycle.\n
 If TARGETS are unspecified, builds the 'default' target (see manual).""")
-@click.version_option(version="0.1.0")
+@click.version_option(version="1.0.1")
 @click.option('-t', metavar='TOOL', required=False,
               help='Run a subtool (use -t list to list subtools).')
 @click.option('-C', metavar='DIR', required=False,

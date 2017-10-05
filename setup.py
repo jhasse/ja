@@ -1,12 +1,14 @@
 from setuptools import setup
 
+VERSION = '1.0.1'
+
 setup(
     name='ja',
-    version='1.0.0',
+    version=VERSION,
     author="Jan Niklas Hasse",
     author_email="jhasse@bixense.com",
     url="https://bixense.com/ja",
-    download_url='https://github.com/jhasse/ja/archive/v1.0.0.tar.gz',
+    download_url='https://github.com/jhasse/ja/archive/v{}.tar.gz'.format(VERSION),
     description="Frontend for Ninja focusing on a faster edit, compile, debug cycle",
     packages=['ja'],
     package_data={'': ['*.pb']},
