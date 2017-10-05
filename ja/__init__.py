@@ -21,8 +21,8 @@ def run(cmd, silent=False, may_fail=False):
             raise err
 
 class BuildSystem(enum.Enum):
-    MESON = enum.auto()
-    CMAKE = enum.auto()
+    MESON = 0
+    CMAKE = 1
 
 @click.command(help="""Frontend for ninja focusing on a faster edit, compile, debug cycle.\n
 If TARGETS are unspecified, builds the 'default' target (see manual).""")
