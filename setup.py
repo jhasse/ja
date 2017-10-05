@@ -8,5 +8,8 @@ setup(
     url="https://bixense.com/ja",
     download_url='https://github.com/jhasse/ja/archive/v1.0.0.tar.gz',
     description="Frontend for Ninja focusing on a faster edit, compile, debug cycle",
-    scripts=['ja'],
+    packages=['ja'],
+    entry_points={
+        'console_scripts': ['ja = ja:main'],
+    },
 )

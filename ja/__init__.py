@@ -117,6 +117,3 @@ def main(t, c, targets):
 
     except subprocess.CalledProcessError as err:
         exit(err.returncode)
-
-if __name__ == '__main__':
-    main()
