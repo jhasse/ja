@@ -13,4 +13,9 @@ setup(
     entry_points={
         'console_scripts': ['ja = ja:main'],
     },
+    install_requires=[
+        'humanize',
+        'click',
+        'protobuf',
+    ],
 )
