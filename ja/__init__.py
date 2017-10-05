@@ -7,8 +7,8 @@ import time
 import shlex
 
 import click
-import frontend
-from native import NinjaNativeFrontend
+from ja import frontend
+from ja.native import NinjaNativeFrontend
 
 def run(cmd, silent=False, may_fail=False):
     if silent:

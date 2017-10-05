@@ -7,7 +7,6 @@ message to a handler object
 """
 
 import os
-import sys
 
 import google.protobuf.descriptor_pb2
 import google.protobuf.message_factory

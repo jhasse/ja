@@ -10,9 +10,8 @@ import struct
 import sys
 import datetime
 from zlib import adler32
-
 import humanize
-import frontend
+from ja import frontend
 
 class SlidingRateInfo(object):
     def __init__(self, n=32):
