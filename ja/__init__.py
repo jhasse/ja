@@ -27,12 +27,13 @@ class BuildSystem(enum.Enum):
 @click.command(help="""Frontend for ninja focusing on a faster edit, compile, debug cycle.\n
 If TARGETS are unspecified, builds the 'default' target (see manual).""")
 @click.version_option(version="1.0.1")
+@click.option('-j', metavar='N', required=False, help='Run N jobs in parallel.', type=int)
 @click.option('-t', metavar='TOOL', required=False,
               help='Run a subtool (use -t list to list subtools).')
 @click.option('-C', metavar='DIR', required=False,
               help='Change to DIR before doing anything else.')
 @click.argument('targets', nargs=-1)
-def main(t, c, targets):
+def main(j, t, c, targets):
     ninja_help = ''
     try:
         ninja_help = subprocess.check_output(['ninja', '--help'], stderr=subprocess.STDOUT)
@@ -91,6 +92,8 @@ def main(t, c, targets):
 
         if t:
             os.execl('/bin/sh', 'sh', '-c', 'ninja -t ' + t)
+        if j:
+            targets += ('-j{}'.format(j),)
 
         native = NinjaNativeFrontend()
 
