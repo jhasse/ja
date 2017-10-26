@@ -11,6 +11,7 @@ import sys
 import datetime
 from zlib import adler32
 import humanize
+import click
 from ja import frontend
 
 class SlidingRateInfo(object):
@@ -150,12 +151,18 @@ class NinjaNativeFrontend:
             handled = True
             # TODO(colincross): get the enum values from proto
             if msg.message.level == 0:
-                prefix = '\x1b[1;32m'
+                prefix = ''
+                color = 'green'
             elif msg.message.level == 1:
-                prefix = '\x1b[1;35mwarning: '
+                prefix = 'warning: '
+                color = 'magenta'
             elif msg.message.level == 2:
-                prefix = '\x1b[1;31merror: '
-            self.printer.print_line(prefix + msg.message.message, LinePrinter.LINE_FULL)
+                prefix = 'error: '
+                color = 'red'
+            self.printer.print_line(
+                click.style(prefix + msg.message.message, fg=color, bold=True),
+                LinePrinter.LINE_FULL
+            )
 
         if not handled:
             pass
