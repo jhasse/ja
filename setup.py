@@ -1,6 +1,6 @@
 from setuptools import setup
 
-VERSION = '1.0.1'
+from ja import VERSION
 
 setup(
     name='ja',
