@@ -34,8 +34,10 @@ If TARGETS are unspecified, builds the 'default' target (see manual).""")
               help='Run a subtool (use -t list to list subtools).')
 @click.option('-C', metavar='DIR', required=False,
               help='Change to DIR before doing anything else.')
+@click.option('-f', metavar='FILE', default='build.ninja',
+              help='Specify input build file. [default=build.ninja]')
 @click.argument('targets', nargs=-1)
-def main(j, t, c, targets):
+def main(j, t, c, f, targets):
     ninja_help = ''
     try:
         ninja_help = subprocess.check_output(['ninja', '--help'], stderr=subprocess.STDOUT)
@@ -60,7 +62,7 @@ def main(j, t, c, targets):
     try:
         build_system = None
         build_dir = 'build'
-        if not os.path.exists('build.ninja'):
+        if not os.path.exists(f):
             old_cwd = os.getcwd()
             if os.listdir('.') == []: # Current directory empty?
                 build_dir = '.'
@@ -86,7 +88,7 @@ def main(j, t, c, targets):
                     run('cd ' + build_dir)
                     os.chdir(build_dir)
 
-            if not os.path.exists('build.ninja'):
+            if not os.path.exists(f):
                 if build_system == BuildSystem.MESON:
                     run('meson ..')
                 elif build_system == BuildSystem.CMAKE:
@@ -107,8 +109,8 @@ def main(j, t, c, targets):
                 time.sleep(1)
 
         os.mkfifo(fifo)
-        subprocess.Popen(['ninja --frontend="cat <&3 >{0}; rm {0}" {1}'.format(
-            fifo, ' '.join([shlex.quote(x) for x in targets])
+        subprocess.Popen(['ninja -f {2} --frontend="cat <&3 >{0}; rm {0}" {1}'.format(
+            fifo, ' '.join([shlex.quote(x) for x in targets]), f
         )], shell=True)
 
         try:
