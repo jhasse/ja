@@ -12,15 +12,18 @@ from ja.native import NinjaNativeFrontend
 
 VERSION = '1.0.1'
 
-def run(cmd, silent=False, may_fail=False):
-    if silent:
+def log(msg, verbose):
+    if verbose:
+        print('\x1b[1;34m' + msg + '\x1b[0m')
+
+def run(cmd, verbose):
+    if not verbose:
         cmd += " &>/dev/null"
-    print('\x1b[1;34m$ ' + cmd + '\x1b[0m')
+    log('$ ' + msg, verbose)
     try:
         subprocess.check_call(cmd, shell=True)
     except subprocess.CalledProcessError as err:
-        if not may_fail:
-            raise err
+        raise err
 
 class BuildSystem(enum.Enum):
     MESON = 0
@@ -36,8 +39,9 @@ If TARGETS are unspecified, builds the 'default' target (see manual).""")
               help='Change to DIR before doing anything else.')
 @click.option('-f', metavar='FILE', default='build.ninja',
               help='Specify input build file. [default=build.ninja]')
+@click.option('-v', help='Show all command lines while building.', is_flag=True)
 @click.argument('targets', nargs=-1)
-def main(j, t, c, f, targets):
+def main(j, t, c, f, v, targets):
     ninja_help = ''
     try:
         ninja_help = subprocess.check_output(['ninja', '--help'], stderr=subprocess.STDOUT)
@@ -76,11 +80,12 @@ def main(j, t, c, f, targets):
 
             if build_dir != '.':
                 if not os.path.exists(build_dir):
-                    run('mkdir ' + build_dir)
+                    run('mkdir ' + build_dir, v)
                 c = build_dir
 
         if c:
             try:
+                log('$ cd ' + c, v)
                 os.chdir(c)
             except FileNotFoundError as err:
                 click.secho(str(err), fg='red', bold=True)
@@ -89,14 +94,16 @@ def main(j, t, c, f, targets):
         if build_system != None:
             if not os.path.exists(f):
                 if build_system == BuildSystem.MESON:
-                    run('meson ..')
+                    run('meson ..', v)
                 elif build_system == BuildSystem.CMAKE:
-                    run('cmake -GNinja ..')
+                    run('cmake -GNinja ..', v)
 
         if t:
             os.execl('/bin/sh', 'sh', '-c', 'ninja -t ' + t)
         if j:
             targets += ('-j{}'.format(j),)
+        if v:
+            targets += ('-v',)
 
         native = NinjaNativeFrontend()
 
