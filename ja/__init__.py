@@ -52,19 +52,12 @@ def main(j, t, c, f, targets):
                     fg='red')
         exit(1)
 
-    if c:
-        try:
-            os.chdir(c)
-        except FileNotFoundError as err:
-            click.secho(str(err), fg='red', bold=True)
-            exit(1)
-
     try:
         build_system = None
-        build_dir = 'build'
+        build_dir = c or 'build'
         if not os.path.exists(f):
             old_cwd = os.getcwd()
-            if os.listdir('.') == []: # Current directory empty?
+            if not c and os.listdir('.') == []: # Current directory empty?
                 build_dir = '.'
                 os.chdir('..')
 
@@ -84,10 +77,16 @@ def main(j, t, c, f, targets):
             if build_dir != '.':
                 if not os.path.exists(build_dir):
                     run('mkdir ' + build_dir)
-                if os.path.exists(build_dir):
-                    run('cd ' + build_dir)
-                    os.chdir(build_dir)
+                c = build_dir
 
+        if c:
+            try:
+                os.chdir(c)
+            except FileNotFoundError as err:
+                click.secho(str(err), fg='red', bold=True)
+                exit(1)
+
+        if build_system != None:
             if not os.path.exists(f):
                 if build_system == BuildSystem.MESON:
                     run('meson ..')
