@@ -117,7 +117,7 @@ def main(j, t, c, f, v, targets):
         os.mkfifo(fifo)
         subprocess.Popen(['ninja -f {2} --frontend="cat <&3 >{0}; rm {0}" {1}'.format(
             fifo, ' '.join([shlex.quote(x) for x in targets]), f
-        )], shell=True)
+        )], shell=True, preexec_fn=os.setpgrp)
 
         try:
             for msg in frontend.Frontend(open(fifo, 'rb')):
