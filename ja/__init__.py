@@ -19,7 +19,7 @@ def log(msg, verbose):
 def run(cmd, verbose):
     if not verbose:
         cmd += " &>/dev/null"
-    log('$ ' + msg, verbose)
+    log('$ ' + cmd, verbose)
     try:
         subprocess.check_call(cmd, shell=True)
     except subprocess.CalledProcessError as err:
