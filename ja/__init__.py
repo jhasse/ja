@@ -94,9 +94,9 @@ def main(j, t, c, f, v, targets):
         if build_system != None:
             if not os.path.exists(f):
                 if build_system == BuildSystem.MESON:
-                    run('meson ..', v)
+                    run('meson ..', True)
                 elif build_system == BuildSystem.CMAKE:
-                    run('cmake -GNinja ..', v)
+                    run('cmake -GNinja ..', True)
 
         if t:
             os.execl('/bin/sh', 'sh', '-c', 'ninja -t ' + t)
