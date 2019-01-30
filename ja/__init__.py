@@ -96,7 +96,7 @@ def main(j, t, c, f, v, targets):
                 if build_system == BuildSystem.MESON:
                     run('meson ..', True)
                 elif build_system == BuildSystem.CMAKE:
-                    run('cmake -GNinja ..', True)
+                    run('cmake -GNinja -DCMAKE_EXPORT_COMPILE_COMMANDS=1 ..', True)
 
         if t:
             os.execl('/bin/sh', 'sh', '-c', 'ninja -t ' + t)
