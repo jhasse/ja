@@ -107,16 +107,17 @@ class NinjaNativeFrontend:
             self.running_edges -= 1
             del self.running[msg.edge_finished.id]
 
-            color = '\x1b[1;34m' if msg.edge_finished.output != '' else None
+            template = '\x1b[1;34m{}\x1b[0m' if msg.edge_finished.output != '' else None
             if msg.edge_finished.status != 0:
-                color = '\x1b[1;31m'
+                template = '\x1b[1;31m{{}}\x1b[0;31m failed with exit code {}.\x1b[0m'.format(
+                    msg.edge_finished.status)
                 edge_failed = True
 
-            if color:
+            if template:
                 self.printer.print_line('', LinePrinter.LINE_ELIDE)
                 if self.verbose or msg.edge_finished.output == '':
                     # Print the command that is spewing before printing its output.
-                    self.printer.print_line(color + edge_started.command + '\x1b[0m\n',
+                    self.printer.print_line(template.format(edge_started.command),
                                             LinePrinter.LINE_FULL)
 
                 # ninja sets stdout and stderr of subprocesses to a pipe, to be able to

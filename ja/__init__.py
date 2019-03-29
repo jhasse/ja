@@ -72,7 +72,7 @@ def main(j, t, c, f, v, targets):
 
             os.chdir(old_cwd)
 
-        if build_system != None:
+        if build_system is not None:
             if os.path.isfile(build_dir):
                 click.secho("Can't create directory '{}' because a file with that name exists."
                             .format(build_dir), fg='red')
@@ -91,7 +91,7 @@ def main(j, t, c, f, v, targets):
                 click.secho(str(err), fg='red', bold=True)
                 exit(1)
 
-        if build_system != None:
+        if build_system is not None:
             if not os.path.exists(f):
                 if build_system == BuildSystem.MESON:
                     run('meson ..', True)
