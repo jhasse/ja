@@ -160,6 +160,7 @@ class NinjaNativeFrontend:
             elif msg.message.level == 2:
                 prefix = 'error: '
                 color = 'red'
+                edge_failed = True
             self.printer.print_line(
                 click.style(prefix + msg.message.message, fg=color, bold=True),
                 LinePrinter.LINE_FULL
