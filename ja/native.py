@@ -372,7 +372,7 @@ class LinePrinter(object):
             return
 
         if locked:
-            self.print_on_new_line('\n')
+            self.print_on_new_line('')
 
         self.console_locked = locked
 
