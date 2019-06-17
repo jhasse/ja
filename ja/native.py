@@ -73,9 +73,20 @@ class NinjaNativeFrontend:
         if msg.HasField("build_finished"):
             handled = True
             self.printer.set_console_locked(False)
-            self.printer.print_line("\x1b[1;32mfinished {} jobs in {}.".format(
+
+            hours = int(self.time_millis / (3600 * 1e3))
+            minutes = int((self.time_millis % (3600 * 1e3)) / (60 * 1e3))
+            seconds = (self.time_millis % (60 * 1e3)) / 1e3
+            if hours > 0:
+                time_passed = '{}h{}m{}s'.format(hours, minutes, int(seconds))
+            elif minutes > 0:
+                time_passed = '{}m{}s'.format(minutes, int(seconds))
+            else:
+                time_passed = '{:.3f}s'.format(seconds)
+            self.printer.print_line("\x1b[1;32mfinished {} job{} in {}.".format(
                 self.total_edges,
-                humanize.naturaldelta(datetime.timedelta(seconds=self.time_millis / 1e3))
+                's' if self.total_edges != 1 else '',
+                time_passed
             ), LinePrinter.LINE_ELIDE)
             self.printer.print_line("\x1b[0m", LinePrinter.LINE_FULL)
 
