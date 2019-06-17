@@ -83,12 +83,11 @@ class NinjaNativeFrontend:
                 time_passed = '{}m{}s'.format(minutes, int(seconds))
             else:
                 time_passed = '{:.3f}s'.format(seconds)
-            self.printer.print_line("\x1b[1;32mfinished {} job{} in {}.".format(
+            self.printer.print_line("\x1b[1;32mfinished {} job{} in {}.\x1b[0m".format(
                 self.total_edges,
                 's' if self.total_edges != 1 else '',
                 time_passed
-            ), LinePrinter.LINE_ELIDE)
-            self.printer.print_line("\x1b[0m", LinePrinter.LINE_FULL)
+            ), LinePrinter.LINE_FULL)
 
         if msg.HasField("edge_started"):
             handled = True
