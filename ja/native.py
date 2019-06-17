@@ -231,6 +231,8 @@ class NinjaNativeFrontend:
                 out += c
         out = '{:17}'.format(out)
         bar_end = round((len(out) * self.finished_edges) / self.total_edges)
+        if self.total_edges == 1:
+            return '' # No need for a progress bar if there's only one edge
         return '\x1b[0;36m▕\x1b[1;37;46m' + out[:bar_end] + '\x1b[0m\x1b[1m' + out[bar_end:] + \
                '\x1b[0;36m▏\x1b[0m'
 
