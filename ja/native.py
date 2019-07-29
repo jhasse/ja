@@ -347,7 +347,7 @@ class LinePrinter(object):
 
             self.have_blank_line = False
         else:
-            sys.stdout.write(to_print + "\n")
+            sys.stdout.write(to_print + "\x1B[K\n")
             sys.stdout.flush()
 
     def print_or_buffer(self, to_print):
