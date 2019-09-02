@@ -97,7 +97,8 @@ class NinjaNativeFrontend:
             self.last_started_edge = msg.edge_started
             self.time_millis = msg.edge_started.start_time
             if msg.edge_started.console or self.printer.smart_terminal:
-                self.print_status(msg.edge_started)
+                # Hide progress bar for console pool jobs as we can't refresh it:
+                self.print_status(msg.edge_started, not msg.edge_started.console)
             if msg.edge_started.console:
                 self.printer.set_console_locked(True)
 
@@ -230,12 +231,10 @@ class NinjaNativeFrontend:
                 out += c
         out = '{:17}'.format(out)
         bar_end = round((len(out) * self.finished_edges) / self.total_edges)
-        if self.total_edges == 1:
-            return '' # No need for a progress bar if there's only one edge
         return '\x1b[0;36m▕\x1b[1;37;46m' + out[:bar_end] + '\x1b[0m\x1b[1m' + out[bar_end:] + \
                '\x1b[0;36m▏\x1b[0m'
 
-    def print_status(self, edge_started):
+    def print_status(self, edge_started, progress_bar=True):
         to_print = edge_started.desc
         if self.verbose or to_print == '':
             to_print = '\x1b[1m{}\x1b[0m'.format(edge_started.command)
@@ -250,7 +249,8 @@ class NinjaNativeFrontend:
                 1 if hash_number > 4 else 0, hash_number % 5 + 2, to_print,
             )
 
-        to_print = self.format_progress_status(self.progress_status_format) + to_print
+        if progress_bar and not self.verbose and self.total_edges != 1: # No need for a progress bar if there's only one edge
+            to_print = self.format_progress_status(self.progress_status_format) + to_print
 
         self.printer.print_line(to_print, LinePrinter.LINE_FULL if self.verbose else LinePrinter.LINE_ELIDE)
 
