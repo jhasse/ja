@@ -237,17 +237,18 @@ class NinjaNativeFrontend:
 
     def print_status(self, edge_started):
         to_print = edge_started.desc
-        words = to_print.split(' ')
-        try:
-            # We hash the first word and the first character of the third word:
-            hash_number = adler32((words[0] + words[2][:1]).encode()) % 10
-        except IndexError:
-            hash_number = 0
-        to_print = "\x1b[{};3{}m{}\x1b[0m".format(
-            1 if hash_number > 4 else 0, hash_number % 5 + 2, to_print,
-        )
         if self.verbose or to_print == '':
-            to_print = edge_started.command
+            to_print = '\x1b[1m{}\x1b[0m'.format(edge_started.command)
+        else:
+            words = to_print.split(' ')
+            try:
+                # We hash the first word and the first character of the third word:
+                hash_number = adler32((words[0] + words[2][:1]).encode()) % 10
+            except IndexError:
+                hash_number = 0
+            to_print = "\x1b[{};3{}m{}\x1b[0m".format(
+                1 if hash_number > 4 else 0, hash_number % 5 + 2, to_print,
+            )
 
         to_print = self.format_progress_status(self.progress_status_format) + to_print
 
