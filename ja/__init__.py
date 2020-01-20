@@ -5,6 +5,7 @@ import os
 import enum
 import time
 import shlex
+import logging
 
 import click
 from ja import frontend
@@ -59,7 +60,7 @@ def main(j, t, c, f, v, targets):
     try:
         build_system = None
         build_dir = c or 'build'
-        if not os.path.exists(f):
+        if not os.path.exists(os.path.join(c, f) if c else f):
             old_cwd = os.getcwd()
             if not c and os.listdir('.') == []: # Current directory empty?
                 build_dir = '.'
@@ -67,8 +68,10 @@ def main(j, t, c, f, v, targets):
 
             if os.path.exists('meson.build'):
                 build_system = BuildSystem.MESON
+                logging.debug('found meson.build')
             elif os.path.exists('CMakeLists.txt'):
                 build_system = BuildSystem.CMAKE
+                logging.debug('found CMakeLists.txt')
 
             os.chdir(old_cwd)
 
@@ -78,10 +81,13 @@ def main(j, t, c, f, v, targets):
                             .format(build_dir), fg='red')
                 exit(1)
 
-            if build_dir != '.':
-                if not os.path.exists(build_dir):
-                    run('mkdir ' + build_dir, v)
-                c = build_dir
+        if build_system is not None:
+            if not os.path.exists(os.path.join(build_dir, f)):
+                if build_system == BuildSystem.MESON:
+                    run('meson {}'.format(build_dir), True)
+                elif build_system == BuildSystem.CMAKE:
+                    run('cmake -B{} -H. -GNinja -DCMAKE_EXPORT_COMPILE_COMMANDS=1'.format(build_dir), True)
+            c = build_dir
 
         if c:
             try:
@@ -90,13 +96,6 @@ def main(j, t, c, f, v, targets):
             except FileNotFoundError as err:
                 click.secho(str(err), fg='red', bold=True)
                 exit(1)
-
-        if build_system is not None:
-            if not os.path.exists(f):
-                if build_system == BuildSystem.MESON:
-                    run('meson ..', True)
-                elif build_system == BuildSystem.CMAKE:
-                    run('cmake -GNinja -DCMAKE_EXPORT_COMPILE_COMMANDS=1 ..', True)
 
         if t:
             os.execl('/bin/sh', 'sh', '-c', 'ninja -t ' + t)
