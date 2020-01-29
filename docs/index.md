@@ -1,8 +1,8 @@
 # Differences between *ja* and *ninja*
 
-<script type="text/javascript" src="https://asciinema.org/a/YtW5isCAvbeltFpbMEVzW0ycQ.js?autoplay=1" id="asciicast-YtW5isCAvbeltFpbMEVzW0ycQ" async></script>
+<!-- <script type="text/javascript" src="https://asciinema.org/a/YtW5isCAvbeltFpbMEVzW0ycQ.js?autoplay=1" id="asciicast-YtW5isCAvbeltFpbMEVzW0ycQ" async></script> -->
 
-<script type="text/javascript" src="https://asciinema.org/a/zP3siuDOZuh8l7QLnQfH4NJho.js?autoplay=1" id="asciicast-zP3siuDOZuh8l7QLnQfH4NJho" async></script>
+<!-- <script type="text/javascript" src="https://asciinema.org/a/zP3siuDOZuh8l7QLnQfH4NJho.js?autoplay=1" id="asciicast-zP3siuDOZuh8l7QLnQfH4NJho" async></script> -->
 
 ## Immediately exists after the first failure
 
@@ -47,7 +47,7 @@ always showing a command that is still running in its status output.
 *ninja* from source though:
 
 ```sh
-git clone https://github.com/colincross/ninja
+git clone https://github.com/jhasse/ninja
 cd ninja
 git checkout serialize
 ./configure.py --bootstrap
@@ -59,3 +59,5 @@ sudo install ninja /usr/local/bin
 ```sh
 sudo pip3 install ja
 ```
+
+Or check out the [source on GitHub](https://github.com/jhasse/ja).
