@@ -11,7 +11,7 @@ import click
 from ja import frontend
 from ja.native import NinjaNativeFrontend
 
-VERSION = '1.0.1'
+VERSION = '1.0.2'
 
 def log(msg, verbose):
     if verbose:
