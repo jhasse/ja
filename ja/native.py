@@ -47,7 +47,7 @@ class NinjaNativeFrontend:
 
         self.time_millis = 0
 
-        self.progress_status_format = os.getenv('NINJA_STATUS', ' ETA: %a ')
+        self.progress_status_format = os.getenv('NINJA_STATUS', ' %a ')
         self.current_rate = SlidingRateInfo()
         self.console_locked = False
 
@@ -219,12 +219,12 @@ class NinjaNativeFrontend:
                     out += '{:.3f}'.format(self.time_millis / 1e3)
                 elif c == 'a':
                     if self.finished_edges > 0:
-                        out += humanize.naturaldelta(
+                        out += 'ETA: ' + humanize.naturaldelta(
                             datetime.timedelta(seconds=self.time_millis / self.finished_edges * \
                             (self.total_edges - self.finished_edges) / 1e3)
                         )
                     else:
-                        out += '?'
+                        out += '{} jobs'.format(self.total_edges)
                 else:
                     raise Exception('unknown placeholder '' + c +'' in $NINJA_STATUS')
             else:
