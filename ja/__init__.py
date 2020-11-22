@@ -104,6 +104,9 @@ def main(j, t, c, f, v, targets):
 
         native = NinjaNativeFrontend()
 
+        default_env = dict(os.environ)
+        default_env['LANG'] = 'C.utf-8'
+
         # Only allow one running instance per build directory:
         fifo = 'ja.lock'
         if os.path.exists(fifo):
@@ -114,7 +117,7 @@ def main(j, t, c, f, v, targets):
         os.mkfifo(fifo)
         subprocess.Popen(['ninja -f {2} --frontend="cat <&3 >{0}; rm -f {0}" {1}'.format(
             fifo, ' '.join([shlex.quote(x) for x in targets]), f
-        )], shell=True, preexec_fn=os.setpgrp)
+        )], shell=True, preexec_fn=os.setpgrp, env=default_env)
 
         try:
             for msg in frontend.Frontend(open(fifo, 'rb')):
