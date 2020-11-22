@@ -143,7 +143,7 @@ class NinjaNativeFrontend:
                 # only a few hundred available on some systems, and ninja can launch
                 # thousands of parallel compile commands.)
                 # TODO: There should be a flag to disable escape code stripping.
-                if not self.printer.smart_terminal:
+                if not self.printer.smart_terminal and os.getenv("CLICOLOR_FORCE", "0") == "0":
                     msg.edge_finished.output = strip_ansi_escape_codes(msg.edge_finished.output)
 
                 # rstrp('\n') because the build output contains a trailing newline most of the time
