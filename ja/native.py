@@ -36,6 +36,14 @@ strip_ansi_re = re.compile(r'\x1B\[[^a-zA-Z]*[a-zA-Z]')
 def strip_ansi_escape_codes(output):
     return strip_ansi_re.sub('', output)
 
+relative_path_re = re.compile(r' \033\[01m\033\[K../')
+relative_path_start_re = re.compile(r'^\033\[01m\033\[K../')
+def fix_relative_path_gcc(output):
+    lines = []
+    for line in output.split('\n'):
+        lines.append(relative_path_start_re.sub('\033[01m\033[K', line))
+    return relative_path_re.sub(' \033[01m\033[K', '\n'.join(lines))
+
 class NinjaNativeFrontend:
     def __init__(self):
         self.total_edges = 0
@@ -143,8 +151,10 @@ class NinjaNativeFrontend:
                 # only a few hundred available on some systems, and ninja can launch
                 # thousands of parallel compile commands.)
                 # TODO: There should be a flag to disable escape code stripping.
-                if not self.printer.smart_terminal:
+                if not self.printer.smart_terminal and os.getenv("CLICOLOR_FORCE", "0") == "0":
                     msg.edge_finished.output = strip_ansi_escape_codes(msg.edge_finished.output)
+
+                msg.edge_finished.output = fix_relative_path_gcc(msg.edge_finished.output)
 
                 # rstrp('\n') because the build output contains a trailing newline most of the time
                 # which isn't needed:

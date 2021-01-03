@@ -15,12 +15,12 @@ def log(msg, verbose):
     if verbose:
         print('\x1b[1;34m' + msg + '\x1b[0m')
 
-def run(cmd, verbose):
+def run(cmd, verbose, env=None):
     if not verbose:
         cmd += " &>/dev/null"
     log('$ ' + cmd, verbose)
     try:
-        subprocess.check_call(cmd, shell=True)
+        subprocess.check_call(cmd, shell=True, env=env)
     except subprocess.CalledProcessError as err:
         raise err
 
@@ -79,12 +79,17 @@ def main(j, t, c, f, v, targets):
                             .format(build_dir), fg='red')
                 exit(1)
 
+        default_env = dict(os.environ)
+        default_env['LANG'] = 'C.utf-8'
+        if not 'CMAKE_EXPORT_COMPILE_COMMANDS' in default_env:
+            default_env['CMAKE_EXPORT_COMPILE_COMMANDS'] = '1'
+
         if build_system is not None:
             if not os.path.exists(os.path.join(build_dir, f)):
                 if build_system == BuildSystem.MESON:
                     run('meson {}'.format(build_dir), True)
                 elif build_system == BuildSystem.CMAKE:
-                    run('cmake -B{} -H. -GNinja -DCMAKE_EXPORT_COMPILE_COMMANDS=1'.format(build_dir), True)
+                    run('cmake -B{} -GNinja'.format(build_dir), True, env=default_env)
             c = build_dir
 
         if c:
@@ -114,7 +119,7 @@ def main(j, t, c, f, v, targets):
         os.mkfifo(fifo)
         subprocess.Popen(['ninja -f {2} --frontend="cat <&3 >{0}; rm -f {0}" {1}'.format(
             fifo, ' '.join([shlex.quote(x) for x in targets]), f
-        )], shell=True, preexec_fn=os.setpgrp)
+        )], shell=True, preexec_fn=os.setpgrp, env=default_env)
 
         try:
             for msg in frontend.Frontend(open(fifo, 'rb')):
