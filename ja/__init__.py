@@ -122,7 +122,10 @@ def main(j, t, c, f, v, targets):
                     exit(1)
         except KeyboardInterrupt:
             native.printer.print_on_new_line('\x1b[1;31mbuild stopped: interrupted by user.\x1b[0m\n')
-            os.remove(fifo)
+            try:
+                os.remove(fifo)
+            except FileNotFoundError:
+                pass # subprocess already deleted the file
             exit(130)
 
     except subprocess.CalledProcessError as err:
