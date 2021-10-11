@@ -10,10 +10,8 @@ import logging
 import click
 from ja import frontend
 from ja.native import NinjaNativeFrontend
-
-def log(msg, verbose):
-    if verbose:
-        print('\x1b[1;34m' + msg + '\x1b[0m')
+from ja.cmake import run_cmake
+from ja.log import log
 
 def run(cmd, verbose, env=None):
     if not verbose:
@@ -89,7 +87,7 @@ def main(j, t, c, f, v, targets):
                 if build_system == BuildSystem.MESON:
                     run('meson {}'.format(build_dir), True)
                 elif build_system == BuildSystem.CMAKE:
-                    run('cmake -B{} -GNinja'.format(build_dir), True, env=default_env)
+                    run_cmake(['-B{}'.format(build_dir), '-GNinja'], v)
             c = build_dir
 
         if c:
