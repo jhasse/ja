@@ -7,7 +7,7 @@
 ## Immediately exists after the first failure
 
 *ja* runs *ninja* in the background. When the first failure occurs (e.g. a file failed to compile)
-it will display it's output and exit. When a file has a syntax error, you can therefore immediately
+it will display its output and exit. When a file has a syntax error, you can therefore immediately
 reuse the command prompt to edit the file without having to wait for other jobs to finish (they will
 run in the background though).
 
