@@ -63,12 +63,12 @@ def main(j, t, c, f, v, release, targets):
                 build_dir = '.'
                 os.chdir('..')
 
-            if os.path.exists('meson.build'):
-                build_system = BuildSystem.MESON
-                logging.debug('found meson.build')
-            elif os.path.exists('CMakeLists.txt'):
+            if os.path.exists('CMakeLists.txt'):
                 build_system = BuildSystem.CMAKE
                 logging.debug('found CMakeLists.txt')
+            elif os.path.exists('meson.build'):
+                build_system = BuildSystem.MESON
+                logging.debug('found meson.build')
 
             os.chdir(old_cwd)
 
