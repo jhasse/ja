@@ -37,8 +37,9 @@ If TARGETS are unspecified, builds the 'default' target (see manual).""")
 @click.option('-f', metavar='FILE', default='build.ninja',
               help='Specify input build file. [default=build.ninja]')
 @click.option('-v', help='Show all command lines while building.', is_flag=True)
+@click.option('--release', help='Create release build when calling CMake.', is_flag=True)
 @click.argument('targets', nargs=-1)
-def main(j, t, c, f, v, targets):
+def main(j, t, c, f, v, release, targets):
     ninja_help = ''
     try:
         ninja_help = subprocess.check_output(['ninja', '--help'], stderr=subprocess.STDOUT)
@@ -87,7 +88,9 @@ def main(j, t, c, f, v, targets):
                 if build_system == BuildSystem.MESON:
                     run('meson {}'.format(build_dir), True)
                 elif build_system == BuildSystem.CMAKE:
-                    run_cmake(['-B{}'.format(build_dir), '-GNinja'], v)
+                    run_cmake(['-B{}'.format(build_dir), '-GNinja', '-DCMAKE_BUILD_TYPE={}'.format(
+                        'Release' if release else 'Debug'
+                    )], v)
             c = build_dir
 
         if c:
