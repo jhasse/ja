@@ -7,7 +7,7 @@ from ja.log import log
 
 def run_cmake(argv, verbose):
 	cmd = ['cmake'] + argv
-	log('$ ' + ' '.join(cmd), True)
+	log('$ ' + ' '.join(['"{}"'.format(x) if ' ' in x else x for x in cmd]), True)
 	if verbose:
 		proc = subprocess.Popen(cmd)
 	else:

@@ -37,7 +37,7 @@ If TARGETS are unspecified, builds the 'default' target (see manual).""")
 @click.option('-f', metavar='FILE', default='build.ninja',
               help='Specify input build file. [default=build.ninja]')
 @click.option('-v', help='Show all command lines while building.', is_flag=True)
-@click.option('--release', help='Create release build when calling CMake.', is_flag=True)
+@click.option('--release', help='Build release configuration (i.e. -f build-Release.ninja).', is_flag=True)
 @click.argument('targets', nargs=-1)
 def main(j, t, c, f, v, release, targets):
     ninja_help = ''
@@ -88,9 +88,7 @@ def main(j, t, c, f, v, release, targets):
                 if build_system == BuildSystem.MESON:
                     run('meson {}'.format(build_dir), True)
                 elif build_system == BuildSystem.CMAKE:
-                    run_cmake(['-B{}'.format(build_dir), '-GNinja', '-DCMAKE_BUILD_TYPE={}'.format(
-                        'Release' if release else 'Debug'
-                    )], v)
+                    run_cmake(['-B{}'.format(build_dir), '-G', 'Ninja Multi-Config'], v)
             c = build_dir
 
         if c:
@@ -107,6 +105,8 @@ def main(j, t, c, f, v, release, targets):
             targets += ('-j{}'.format(j),)
         if v:
             targets += ('-v',)
+        if release:
+            f = 'build-Release.ninja'
 
         native = NinjaNativeFrontend()
 
