@@ -2,3 +2,9 @@
 
 Frontend for [Ninja](https://ninja-build.org) focusing on a faster edit, compile, debug cycle.
 [Learn more...](docs/index.md)
+
+## Install From Git
+
+```
+pip install --user --force .
+```
