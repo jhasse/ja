@@ -37,7 +37,9 @@ If TARGETS are unspecified, builds the 'default' target (see manual).""")
 @click.option('-f', metavar='FILE', default='build.ninja',
               help='Specify input build file. [default=build.ninja]')
 @click.option('-v', help='Show all command lines while building.', is_flag=True)
-@click.option('--release', help='Build release configuration (i.e. -f build-Release.ninja).', is_flag=True)
+@click.option('--release',
+              help='Build release configuration when using CMake\'s Ninja Multi-Config.',
+              is_flag=True)
 @click.argument('targets', nargs=-1)
 def main(j, t, c, f, v, release, targets):
     ninja_help = ''
@@ -105,7 +107,7 @@ def main(j, t, c, f, v, release, targets):
             targets += ('-j{}'.format(j),)
         if v:
             targets += ('-v',)
-        if release:
+        if release and f == 'build.ninja':
             f = 'build-Release.ninja'
 
         native = NinjaNativeFrontend()
