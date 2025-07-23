@@ -7,7 +7,6 @@ message to a handler object
 """
 
 import os
-import pkg_resources
 import google.protobuf.descriptor_pb2
 import google.protobuf.message_factory
 
@@ -27,7 +26,8 @@ class Frontend(object):
     def get_status_proto(self):
         fd_set = google.protobuf.descriptor_pb2.FileDescriptorSet()
         descriptor = 'frontend.pb'
-        fd_set.ParseFromString(pkg_resources.resource_string(__name__, 'frontend.pb'))
+        with open(os.path.join(os.path.dirname(__file__), 'frontend.pb'), 'rb') as f:
+            fd_set.ParseFromString(f.read())
 
         if len(fd_set.file) != 1:
             raise RuntimeError('expected exactly one file descriptor in ' + descriptor)
