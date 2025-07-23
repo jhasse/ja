@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import signal
 import subprocess
 import os
 import enum
@@ -117,6 +118,8 @@ def main(j, t, c, f, v, release, targets):
         os.mkfifo(fifo)
         fallback_to_ninja = b'--frontend' not in ninja_help
         if fallback_to_ninja:
+            # Ignore SIGINT because ninja will handle it:
+            signal.signal(signal.SIGINT, signal.SIG_IGN)
             # This is a fallback for ninja versions that don't support the frontend feature:
             subprocess.check_call(
                 [
@@ -125,7 +128,6 @@ def main(j, t, c, f, v, release, targets):
                     )
                 ],
                 shell=True,
-                preexec_fn=os.setpgrp,
                 env=default_env,
             )
         else:
