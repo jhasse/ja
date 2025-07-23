@@ -1,6 +1,6 @@
 from setuptools import setup
 
-VERSION='1.1.1' # also see __init__.py
+VERSION='1.1.2' # also see __init__.py
 
 setup(
     name='ja',
