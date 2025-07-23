@@ -50,11 +50,6 @@ def main(j, t, c, f, v, release, targets):
     except FileNotFoundError:
         click.secho("Couldn't find ninja command. Please make sure it's on your PATH.", fg='red')
         exit(1)
-    if b'--frontend' not in ninja_help:
-        click.secho("Your version of ninja doesn't support external frontends.\nSee "
-                    "https://github.com/ninja-build/ninja/pull/1210 for more information.",
-                    fg='red')
-        exit(1)
 
     try:
         build_system = None
@@ -120,21 +115,35 @@ def main(j, t, c, f, v, release, targets):
                 time.sleep(1)
 
         os.mkfifo(fifo)
-        subprocess.Popen(['ninja -f {2} --frontend="cat <&3 >{0}; rm -f {0}" {1}'.format(
-            fifo, ' '.join([shlex.quote(x) for x in targets]), f
-        )], shell=True, preexec_fn=os.setpgrp, env=default_env)
+        fallback_to_ninja = b'--frontend' not in ninja_help
+        if fallback_to_ninja:
+            # This is a fallback for ninja versions that don't support the frontend feature:
+            subprocess.check_call(
+                [
+                    "ninja -f {} {}; rm -f {}".format(
+                        f, " ".join([shlex.quote(x) for x in targets]), fifo
+                    )
+                ],
+                shell=True,
+                preexec_fn=os.setpgrp,
+                env=default_env,
+            )
+        else:
+            subprocess.Popen(['ninja -f {2} --frontend="cat <&3 >{0}; rm -f {0}" {1}'.format(
+                fifo, ' '.join([shlex.quote(x) for x in targets]), f
+            )], shell=True, preexec_fn=os.setpgrp, env=default_env)
 
-        try:
-            for msg in frontend.Frontend(open(fifo, 'rb')):
-                if native.handle(msg):
-                    exit(1)
-        except KeyboardInterrupt:
-            native.printer.print_on_new_line('\x1b[1;31mbuild stopped: interrupted by user.\x1b[0m\n')
             try:
-                os.remove(fifo)
-            except FileNotFoundError:
-                pass # subprocess already deleted the file
-            exit(130)
+                for msg in frontend.Frontend(open(fifo, 'rb')):
+                    if native.handle(msg):
+                        exit(1)
+            except KeyboardInterrupt:
+                native.printer.print_on_new_line('\x1b[1;31mbuild stopped: interrupted by user.\x1b[0m\n')
+                try:
+                    os.remove(fifo)
+                except FileNotFoundError:
+                    pass # subprocess already deleted the file
+                exit(130)
 
     except subprocess.CalledProcessError as err:
         exit(err.returncode)
